@@ -15,9 +15,13 @@
 	<body>
 <p id="errorMessage"></p>
 
-<video id="monitor" autoplay width="500" height="200" style="visibility: hidden; float:left;"></video>
-<canvas id="videoImage" width="500" height="200" style="visibility: hidden; float:left;"></canvas>
+<form>
+<video id="monitor" autoplay width="500" height="500" style="visibility: hidden; float:left;"></video>
+<canvas id="videoImage" width="500" height="500" style="visibility: hidden; float:left;"></canvas>
+<input type="file" id="File" onload="files_loaded(this.files)" multiple>
 
+
+</form>
 <script>
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 window.URL = window.URL || window.webkitURL;
@@ -66,9 +70,9 @@ function noStream(e)
 
 			var camera, scene, renderer;
 			var group;
-var video, videoImage, videoImageContext, backgroundtexture, backgroundMesh,videoTexture,controls, stats,mesh;
-        var backgroundScene;
-        var backgroundCamera;
+            var video, videoImage, videoImageContext, backgroundtexture, backgroundMesh,videoTexture,controls, stats,mesh;
+            var backgroundScene;
+            var backgroundCamera;
 			init();
 			animate();
 
@@ -94,7 +98,11 @@ var video, videoImage, videoImageContext, backgroundtexture, backgroundMesh,vide
 
 				scene.add( new THREE.AmbientLight( 0x505050 ) );
 
-				group = new THREE.Object3D();
+                group = new THREE.Object3D();
+                
+
+                var geometry = new THREE.Geometry()
+               /*
 
 				for ( var i = 1; i < 25; i ++ ) {
 
@@ -104,31 +112,76 @@ var video, videoImage, videoImageContext, backgroundtexture, backgroundMesh,vide
 						roughness: 0.95,
 						metalness: 0.0,
 						side: THREE.DoubleSide,
-						clippingPlanes: clipPlanes,
-						clipIntersection: true
+                        clippingPlanes: clipPlanes,
+                        visible: false,
+                        clipIntersection: true
+
 					} );
-					group.add( new THREE.Mesh( geometry, material ) );
+                    group.add(new THREE.Mesh(geometry, material));
+                    
 
-				}
+                }*/
 
-				//scene.add( group );
-				var loader = new THREE.STLLoader();
-				loader.load( 'examples/models/stl/ascii/4.stl', function ( geometry ) {
+                //Not seen on the screen, it was already here
+                
+	                                 
+                var fileElem = document.getElementById("File");
+                var files2;
+                var len2;
+                       fileElem.addEventListener('change', function (event) {
+                           var loader = new THREE.STLLoader();
+                           
+                           var i = 0,
+                              files = fileElem.files,
+                              len = files.length;
+                           files2 = files;
+                           len2 = len;
+                           for (j = 0; j < len2; j++) {
+                               console.log(files2[j].name);
+                           }
 
-					var material = new THREE.MeshPhongMaterial( { color: 0xff5533, specular: 0x111111, shininess: 200 } );
-					var mesh = new THREE.Mesh( geometry, material );
+                           for (; i < len; i++) {
+                               
+                               
 
-					mesh.position.set( 0, - 0.25, 0.6 );
-					mesh.rotation.set( 0, - Math.PI / 2, 0 );
-					mesh.scale.set( 0.5, 0.5, 0.5 );
+                               loader.load('examples/models/stl/ascii/' + files[i].name, function (geometry) {
 
-					mesh.castShadow = true;
-					mesh.receiveShadow = true;
 
-					scene.add( mesh );
+                                   var color = new THREE.Color(Math.random(), Math.random(), Math.random());
+                                   var material = new THREE.MeshPhongMaterial({color, specular: 0x111111, shininess: 200 });
+                                   //var material = new THREE.MultiMaterial(materials);
+                                   mesh = new THREE.Mesh(geometry, material);
+                                                                      
+                                   mesh.position.set(0, -0.25, 0.6);
+                                   mesh.rotation.set(0, -Math.PI / 2, 0);
+                                   mesh.scale.set(0.25, 0.25, 0.25);
+                                   
+                                   mesh.castShadow = true;
+                                   mesh.receiveShadow = true;
+                                   mesh.add = files[i];
+                                   var children = group.children;
+                                   for (var i = 0; i < children.length; i++) {
+                                       children[i].name = files[i].name;
+                                       console.log(children[i]);
+                                   }
+                                   
+                                   group.add(mesh);
+                                  
+                                  
+                                   
+                                   
+                                   
+                               });
+                           }
 
-				} );
-                                // Load the background texture
+                       }, false);           
+				    
+
+				
+                       scene.add(group);
+                       
+
+			    	                              // Load the background texture
 	///////////
 	// VIDEO //
 	///////////
@@ -157,14 +210,14 @@ var video, videoImage, videoImageContext, backgroundtexture, backgroundMesh,vide
                 map: videoTexture
             }));
 
-        backgroundMesh .material.depthTest = false;
-        backgroundMesh .material.depthWrite = false;
+        backgroundMesh.material.depthTest = false;
+        backgroundMesh.material.depthWrite = false;
 
         // Create your background scene
          backgroundScene = new THREE.Scene();
          backgroundCamera = new THREE.Camera();
-        backgroundScene .add(backgroundCamera );
-        backgroundScene .add(backgroundMesh );
+        backgroundScene.add(backgroundCamera );
+        backgroundScene.add(backgroundMesh );
 				// Renderer
 
 				var container = document.body;
@@ -185,26 +238,66 @@ var video, videoImage, videoImageContext, backgroundtexture, backgroundMesh,vide
 				container.appendChild( stats.dom );
 
 				// GUI
+                var gui = new dat.GUI();
 
-				mode = {};
-				mode.clipIntersection = true;
-				mode.clipPosition = 0;
+                
+                
+                
+                
+                
+				
+				mode = {
+				    clipIntersection: true,
+                    clipPosition: 0,
+                    object1: true,
+				    full_scene: true,
+                    reset_scene:function(){reset_scene()}
+                    
 
-				var gui = new dat.GUI();
-				gui.add( mode, 'clipIntersection' ).onChange( function () {
+				};
+				gui.add(mode, 'clipIntersection').onChange(function () {
 
-					var children = group.children;
+				    var children = group.children;
 
-					for ( var i = 0; i < children.length; i ++ ) {
+				    for (var i = 0; i < children.length; i++) {
 
-						var child = children[ i ];
-						child.material.clipIntersection = ! child.material.clipIntersection;
+				        var child = children[i];
+				        child.material.clipIntersection = !child.material.clipIntersection;
 
-					}
+				    }
 
-				} );
-				//gui.add( mode, 'clipPosition', -16, 16 );
+				});
+				gui.add(mode, 'clipPosition', -16, 16);
 
+
+                var first_object = gui.add(mode, 'object1').name('object1').listen();
+                first_object.onChange(function (value) {
+                    
+                        var name = files2[0].name;
+                        var selected_object = group.getObjectByName(name);
+                        selected_object.visible = value;
+                    
+
+                });
+
+               
+            
+				var objectVisible = gui.add(mode, 'full_scene').name('full_scene').listen();
+				objectVisible.onChange(function (value) {
+
+				    scene.visible = value;
+				});
+
+				gui.add(mode, 'reset_scene');
+
+
+                function reset_scene()
+                {                  
+
+                    controls.reset();                    
+                                 
+                }
+                
 				// Controls
 
 				var controls = new THREE.OrbitControls( camera, renderer.domElement );
@@ -236,42 +329,44 @@ var video, videoImage, videoImageContext, backgroundtexture, backgroundMesh,vide
 	stats.update();
 }
 
-			function animate() {
+                        function animate() {
 
-				requestAnimationFrame( animate );
-                                	if ( video.readyState === video.HAVE_ENOUGH_DATA ) 
-	{
-		videoImageContext.drawImage( video, 0, 0, videoImage.width, videoImage.height );
-		if ( videoTexture ) 
-			videoTexture.needsUpdate = true;
-	}
-        renderer.autoClear = false;
-        renderer.clear();
-        renderer.render(backgroundScene , backgroundCamera );
-//
-//				var children = group.children;
-//
-//				for ( var i = 0; i < children.length; i ++ ) {
-//
-//					var current = children[ i ].material;
-//
-//					for ( var j = 0; j < current.clippingPlanes.length; j ++ ) {
-//
-//						var plane = current.clippingPlanes[ j ];
-//						plane.constant = ( 49 * plane.constant + mode.clipPosition ) / 50;
-//
-//					}
-//
-//				}
+                            requestAnimationFrame(animate);
+                            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                                videoImageContext.drawImage(video, 0, 0, videoImage.width, videoImage.height);
+                                if (videoTexture)
+                                    videoTexture.needsUpdate = true;
+                            }
 
-				stats.begin();
-				renderer.render( scene, camera );
-				stats.end();
-                                render();
-                                update();
+                             
+                            renderer.autoClear = false;
+                            renderer.clear();
+                            renderer.render(backgroundScene, backgroundCamera);
+                            
+                            //
+                            //				var children = group.children;
+                            //
+                            //				for ( var i = 0; i < children.length; i ++ ) {
+                            //
+                            //					var current = children[ i ].material;
+                            //
+                            //					for ( var j = 0; j < current.clippingPlanes.length; j ++ ) {
+                            //
+                            //						var plane = current.clippingPlanes[ j ];
+                            //						plane.constant = ( 49 * plane.constant + mode.clipPosition ) / 50;
+                            //
+                            //					}
+                            //
+                            //				}
 
-			}
+                            stats.begin();
+                            renderer.render(scene, camera);
+                            stats.end();
+                            render();
+                            update();
 
+
+                        }
 		</script>
 
 	</body>
