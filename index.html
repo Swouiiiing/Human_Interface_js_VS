@@ -62,15 +62,16 @@ function noStream(e)
 		<script src="examples/js/libs/stats.min.js"></script>
 		<script src="examples/js/libs/dat.gui.min.js"></script>
 		<script src="examples/js/loaders/STLLoader.js"></script>
-
+        <script src="examples/js/renderers/Projector.js"></script>
 		<script src="examples/js/Detector.js"></script>
+        <script src="src/core/Raycaster.js"></script>
 		<!--<script src="js/libs/stats.min.js"></script>-->
 
 		<script>
 
 			var camera, scene, renderer;
 			var group;
-            var video, videoImage, videoImageContext, backgroundtexture, backgroundMesh,videoTexture,controls, stats,mesh;
+            var video, videoImage, videoImageContext, backgroundtexture, backgroundMesh, videoTexture, controls, stats, mesh; //, raycaster, mouse;
             var backgroundScene;
             var backgroundCamera;
 			init();
@@ -99,7 +100,7 @@ function noStream(e)
 				scene.add( new THREE.AmbientLight( 0x505050 ) );
 
                 group = new THREE.Object3D();
-                
+                projector = new THREE.Projector();
 
                 var geometry = new THREE.Geometry()
                /*
@@ -164,7 +165,7 @@ function noStream(e)
                                        children[i].name = files[i].name;
                                        console.log(children[i]);
                                    }
-                                   
+                                   var controls2 = new function () { this.visible = true; };
                                    group.add(mesh);
                                   
                                   
@@ -237,14 +238,47 @@ function noStream(e)
 				stats = new Stats();
 				container.appendChild( stats.dom );
 
-				// GUI
-                var gui = new dat.GUI();
 
-                
-                
-                
-                
-                
+                // Raycaster
+                //mouse = new THREE.Vector2();
+                //raycaster = new THREE.Raycaster();
+                window.addEventListener('mouseover', Select_object, false);
+
+                function Select_object(e) {
+                    e.preventDefault();
+
+                    var mouseVector = new THREE.Vector3(
+                        (e.clientX / window.innerWidth) * 2 - 1,
+                        - (e.clientY / window.innerHeight) * 2 + 1,
+                        1);
+
+                    projector.unprojectVector(mouseVector, camera);
+                    var raycaster = new THREE.Raycaster(camera.position, mouseVector.sub(camera.position).normalize());    // subSelf was change to sub
+
+                    // create an array containing all objects in the scene with which the ray intersects
+                    var intersects = raycaster.intersectObjects(group.children);
+                    console.log(intersects);
+                    if (intersects.length > 0) {
+                        console.log("Intersected object:", intersects.length);
+                        alert("Intersection");
+                        for (var i = 0; i < intersects.length; i++) {
+                            var intersection = intersects[i],
+                                obj = intersection.object;
+
+                            obj.visible = false;
+                        }
+                        
+                    }
+                }
+
+
+
+
+
+
+                // GUI
+
+                var gui = new dat.GUI();               
 				
 				mode = {
 				    clipIntersection: true,
@@ -317,7 +351,7 @@ function noStream(e)
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( window.innerWidth, window.innerHeight );
-
+                
 			}
                         function update()
 {		
@@ -338,7 +372,12 @@ function noStream(e)
                                     videoTexture.needsUpdate = true;
                             }
 
-                             
+                            /*function render() {
+                                renderer.clear();
+                                renderer.render(backgroundScene, backgroundCamera);
+                                renderer.render(scene, camera);
+                            }
+                             */
                             renderer.autoClear = false;
                             renderer.clear();
                             renderer.render(backgroundScene, backgroundCamera);
