@@ -1,373 +1,315 @@
 <!DOCTYPE html>
 <html lang="en">
-<!--	<head>
-		<title>three.js webgl - clipIntersection</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<style>
-			body {
-				margin: 0px;
-				background-color: #000000;
-				overflow: hidden;
-			}
-		</style>
-	</head>-->
-	<body>
-<p id="errorMessage"></p>
-
-<form>
-<video id="monitor" autoplay width="500" height="500" style="visibility: hidden; float:left;"></video>
-<canvas id="videoImage" width="500" height="500" style="visibility: hidden; float:left;"></canvas>
-<input type="file" id="File" onload="files_loaded(this.files)" multiple>
-
-
-</form>
-<script>
-navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-window.URL = window.URL || window.webkitURL;
-
-var camvideo = document.getElementById('monitor');
-
-	if (!navigator.getUserMedia) 
-	{
-		document.getElementById('errorMessage').innerHTML = 
-			'Sorry. <code>navigator.getUserMedia()</code> is not available.';
-	} else {
-		navigator.getUserMedia({video: true}, gotStream, noStream);
-	}
-
-function gotStream(stream) 
-{
-	if (window.URL) 
-	{   camvideo.src = window.URL.createObjectURL(stream);   } 
-	else // Opera
-	{   camvideo.src = stream;   }
-
-	camvideo.onerror = function(e) 
-	{   stream.stop();   };
-
-	stream.onended = noStream;
-}
-
-function noStream(e) 
-{
-	var msg = 'No camera available.';
-	if (e.code == 1) 
-	{   msg = 'User denied access to use camera.';   }
-	document.getElementById('errorMessage').textContent = msg;
-}
-</script>
-		<script src="build/three.js"></script>
-		<script src="examples/js/controls/OrbitControls.js"></script>
-		<script src="examples/js/libs/stats.min.js"></script>
-		<script src="examples/js/libs/dat.gui.min.js"></script>
-		<script src="examples/js/loaders/STLLoader.js"></script>
-
-		<script src="examples/js/Detector.js"></script>
-		<!--<script src="js/libs/stats.min.js"></script>-->
-
-		<script>
-
-			var camera, scene, renderer;
-			var group;
-            var video, videoImage, videoImageContext, backgroundtexture, backgroundMesh,videoTexture,controls, stats,mesh;
-            var backgroundScene;
-            var backgroundCamera;
-			init();
-			animate();
-
-			function init() {
-
-				camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 1, 800 );
-
-				camera.position.set( -20, 10, 50 );
-				camera.lookAt( new THREE.Vector3( 0, 0, 0) );
-
-				scene = new THREE.Scene();
-
-				// Lights
-
-				var light = new THREE.HemisphereLight( 0xffffbb, 0x080820, 1 );
-				scene.add( light );
-
-				var clipPlanes = [
-					new THREE.Plane( new THREE.Vector3( 1,  0,  0 ), 0 ),
-					new THREE.Plane( new THREE.Vector3( 0, -1,  0 ), 0 ),
-					new THREE.Plane( new THREE.Vector3( 0,  0, -1 ), 0 )
-				];
-
-				scene.add( new THREE.AmbientLight( 0x505050 ) );
-
-                group = new THREE.Object3D();
-                
-
-                var geometry = new THREE.Geometry()
-               /*
-
-				for ( var i = 1; i < 25; i ++ ) {
-
-					var geometry = new THREE.SphereBufferGeometry( i / 2, 48, 48 );
-					var material = new THREE.MeshStandardMaterial( {
-						color: new THREE.Color( Math.sin( i * 0.5 ) * 0.5 + 0.5, Math.cos( i * 1.5 ) * 0.5 + 0.5, Math.sin( i * 4.5 + 0 ) * 0.5 + 0.5 ),
-						roughness: 0.95,
-						metalness: 0.0,
-						side: THREE.DoubleSide,
-                        clippingPlanes: clipPlanes,
-                        visible: false,
-                        clipIntersection: true
-
-					} );
-                    group.add(new THREE.Mesh(geometry, material));
-                    
-
-                }*/
-
-                //Not seen on the screen, it was already here
-                
-	                                 
-                var fileElem = document.getElementById("File");
-                var files2;
-                var len2;
-                       fileElem.addEventListener('change', function (event) {
-                           var loader = new THREE.STLLoader();
-                           
-                           var i = 0,
-                              files = fileElem.files,
-                              len = files.length;
-                           files2 = files;
-                           len2 = len;
-                           for (j = 0; j < len2; j++) {
-                               console.log(files2[j].name);
-                           }
-
-                           for (; i < len; i++) {
-                               
-                               
-
-                               loader.load('examples/models/stl/ascii/' + files[i].name, function (geometry) {
-
-
-                                   var color = new THREE.Color(Math.random(), Math.random(), Math.random());
-                                   var material = new THREE.MeshPhongMaterial({color, specular: 0x111111, shininess: 200 });
-                                   //var material = new THREE.MultiMaterial(materials);
-                                   mesh = new THREE.Mesh(geometry, material);
-                                                                      
-                                   mesh.position.set(0, -0.25, 0.6);
-                                   mesh.rotation.set(0, -Math.PI / 2, 0);
-                                   mesh.scale.set(0.25, 0.25, 0.25);
-                                   
-                                   mesh.castShadow = true;
-                                   mesh.receiveShadow = true;
-                                   mesh.add = files[i];
-                                   var children = group.children;
-                                   for (var i = 0; i < children.length; i++) {
-                                       children[i].name = files[i].name;
-                                       console.log(children[i]);
-                                   }
-                                   
-                                   group.add(mesh);
-                                  
-                                  
-                                   
-                                   
-                                   
-                               });
-                           }
-
-                       }, false);           
-				    
-
-				
-                       scene.add(group);
-                       
-
-			    	                              // Load the background texture
-	///////////
-	// VIDEO //
-	///////////
-
-	video = document.getElementById( 'monitor' );
-	
-	videoImage = document.getElementById( 'videoImage' );
-	videoImageContext = videoImage.getContext( '2d' );
-	// background color if no video present
-	videoImageContext.fillStyle = '#000000';
-	videoImageContext.fillRect( 0, 0, 1024 , 768);//videoImage.width, videoImage.height );
-
-	videoTexture = new THREE.Texture( videoImage );
-	videoTexture.minFilter = THREE.LinearFilter;
-	videoTexture.magFilter = THREE.LinearFilter;
-      // videoTexture.wrapS = THREE.RepeatWrapping;
-      // videoTexture.repeat.x = - 1;
-	
-	var movieMaterial = new THREE.MeshBasicMaterial( { map: videoTexture, overdraw: true, side:THREE.DoubleSide } );
-        // Load the background texture
-         backgroundtexture = THREE.ImageUtils.loadTexture( '1.jpg' );
-        // backgroundtexture = new THREE.Texture( videoImage );
-         backgroundMesh = new THREE.Mesh(
-            new THREE.PlaneGeometry(2, 2, 0),
-            new THREE.MeshBasicMaterial({
-                map: videoTexture
-            }));
-
-        backgroundMesh.material.depthTest = false;
-        backgroundMesh.material.depthWrite = false;
-
-        // Create your background scene
-         backgroundScene = new THREE.Scene();
-         backgroundCamera = new THREE.Camera();
-        backgroundScene.add(backgroundCamera );
-        backgroundScene.add(backgroundMesh );
-				// Renderer
-
-				var container = document.body;
-
-				renderer = new THREE.WebGLRenderer();
-				renderer.antialias = true;
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				renderer.setClearColor( 0x222222 );
-				renderer.localClippingEnabled = true;
-
-				window.addEventListener( 'resize', onWindowResize, false );
-				container.appendChild( renderer.domElement );
-
-				// Stats
-
-				stats = new Stats();
-				container.appendChild( stats.dom );
-
-				// GUI
-                var gui = new dat.GUI();
-
-                
-                
-                
-                
-                
-				
-				mode = {
-				    clipIntersection: true,
-                    clipPosition: 0,
-                    object1: true,
-				    full_scene: true,
-                    reset_scene:function(){reset_scene()}
-                    
-
-				};
-				gui.add(mode, 'clipIntersection').onChange(function () {
-
-				    var children = group.children;
-
-				    for (var i = 0; i < children.length; i++) {
-
-				        var child = children[i];
-				        child.material.clipIntersection = !child.material.clipIntersection;
-
-				    }
-
-				});
-				gui.add(mode, 'clipPosition', -16, 16);
-
-
-                var first_object = gui.add(mode, 'object1').name('object1').listen();
-                first_object.onChange(function (value) {
-                    
-                        var name = files2[0].name;
-                        var selected_object = group.getObjectByName(name);
-                        selected_object.visible = value;
-                    
-
-                });
-
-               
-            
-				var objectVisible = gui.add(mode, 'full_scene').name('full_scene').listen();
-				objectVisible.onChange(function (value) {
-
-				    scene.visible = value;
-				});
-
-				gui.add(mode, 'reset_scene');
-
-
-                function reset_scene()
-                {                  
-
-                    controls.reset();                    
-                                 
-                }
-                
-				// Controls
-
-				var controls = new THREE.OrbitControls( camera, renderer.domElement );
-				controls.target.set( 0, 1, 0 );
-				controls.update();
-
-				// Start
-
-				startTime = Date.now();
-				time = 0;
-
-			}
-
-			function onWindowResize() {
-
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
-
-				renderer.setSize( window.innerWidth, window.innerHeight );
-
-			}
-                        function update()
-{		
-	if ( keyboard.pressed("p") ) // pause
-		video.pause();
-	if ( keyboard.pressed("r") ) // resume
-		video.play();
-	controls.update();
-	stats.update();
-}
-
-                        function animate() {
-
-                            requestAnimationFrame(animate);
-                            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                                videoImageContext.drawImage(video, 0, 0, videoImage.width, videoImage.height);
-                                if (videoTexture)
-                                    videoTexture.needsUpdate = true;
-                            }
-
-                             
-                            renderer.autoClear = false;
-                            renderer.clear();
-                            renderer.render(backgroundScene, backgroundCamera);
-                            
-                            //
-                            //				var children = group.children;
-                            //
-                            //				for ( var i = 0; i < children.length; i ++ ) {
-                            //
-                            //					var current = children[ i ].material;
-                            //
-                            //					for ( var j = 0; j < current.clippingPlanes.length; j ++ ) {
-                            //
-                            //						var plane = current.clippingPlanes[ j ];
-                            //						plane.constant = ( 49 * plane.constant + mode.clipPosition ) / 50;
-                            //
-                            //					}
-                            //
-                            //				}
-
-                            stats.begin();
-                            renderer.render(scene, camera);
-                            stats.end();
-                            render();
-                            update();
+<<head>
+    <title>Try Again</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=yes, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            margin:0px 0px 0px 0px;
+            z-index:3;
+                        
+        }
+
+        #monitor {
+            margin: 0px 0px 0px 0px;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            float: left;
+            visibility: hidden;
+            z-index: 1;
+        }
+        #videoImage {
+            margin: 0px 0px 0px 0px;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            float: left;
+            visibility: hidden;
+            z-index: 5;
+        }
+
+        #File { 
+            position:absolute;
+            top:5px;
+            left:800px;
+                                              
+        }
+    </style>
+</head>
+
+    <p id="errorMessage"></p>
+<body>
+    <video id="monitor" autoplay width="500" height="500"></video>
+    <canvas id="videoImage" width="500" height="500"></canvas>
+
+    <form>
+        <input type="file" id="File" onload="files_loaded(this.files)" multiple>
+    </form>
+    <div>
+        <script>
+            navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+            window.URL = window.URL || window.webkitURL;
+
+            var camvideo = document.getElementById('monitor');
+
+            if (!navigator.getUserMedia) {
+                document.getElementById('errorMessage').innerHTML =
+                    'Sorry. <code>navigator.getUserMedia()</code> is not available.';
+            } else {
+                navigator.getUserMedia({ video: true }, gotStream, noStream);
+            }
+
+            function gotStream(stream) {
+                if (window.URL)
+                { camvideo.src = window.URL.createObjectURL(stream); }
+                else // Opera
+                { camvideo.src = stream; }
+
+                camvideo.onerror = function (e)
+                { stream.stop(); };
+
+                stream.onended = noStream;
+            }
+
+            function noStream(e) {
+                var msg = 'No camera available.';
+                if (e.code == 1)
+                { msg = 'User denied access to use camera.'; }
+                document.getElementById('errorMessage').textContent = msg;
+            }
+        </script>
+        <script src="build/three.js"></script>
+        <script src="examples/js/controls/OrbitControls.js"></script>
+        <script src="examples/js/libs/stats.min.js"></script>
+        <script src="examples/js/libs/dat.gui.min.js"></script>
+        <script src="examples/js/loaders/STLLoader.js"></script>
+        <script src="examples/js/renderers/Projector.js"></script>
+        <script src="examples/js/Detector.js"></script>
+        <script src="examples/js/libs/stats.min.js"></script>
+        <srcipt src="examples/js/THREEx.FullScreen.js">
+            <script src="examples/js/THREEx.KeyboardState.js"></script>
+
+            <script>
+
+                var camera, scene, renderer;     //  Creation of the scene
+                var video, videoImage, videoImageContext, videoTexture, backgroundtexture, backgroundMesh, backgroundScene, backgroundCamera, stats, controls;  //creation of background
+                var mouse, raycaster; //selection by raycasting
+
+                // Get object from the files
+
+                var fileElem;
+
+                //initialisation and looping the scene
 
+                init();
+                animate();
 
+                function init() {
+                    camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.01, 800);
+                    camera.position.set(-20, 10, 50);
+                    camera.lookAt(new THREE.Vector3(0, 0, 0, ));
+
+                    scene = new THREE.Scene();
+
+                    //Lights
+
+                    var light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
+                    scene.add(light);
+                    scene.add(new THREE.AmbientLight(0x505050));
+
+
+                    // Video
+
+                    video = document.getElementById('monitor');
+                    videoImage = document.getElementById('videoImage');
+                    videoImageContext = videoImage.getContext('2d');
+                    // Background color if no video present
+                    videoImageContext.fillStyle = '#000000';
+                    videoImageContext.fillRect(0, 0, videoImage.innerWidth, videoImage.innerHeight);
+
+                    videoTexture = new THREE.Texture(videoImage);
+                    videoTexture.minFilter = THREE.LinearFilter;
+                    videoTexture.magFilter = THREE.LinearFilter;
+
+                    var movieMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, overdraw: true, side: THREE.DoubleSide });
+                    //Load the background texture
+                    backgroundtexture = THREE.ImageUtils.loadTexture('1.png');
+                    backgroundtexture = new THREE.Texture(videoImage);
+                    backgroundMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2, 0), new THREE.MeshBasicMaterial({ map: videoTexture }));
+
+                    backgroundMesh.material.depthTest = false;
+                    backgroundMesh.material.depthWrite = false;
+
+                    // Create Background scene
+                    backgroundScene = new THREE.Scene();
+                    backgroundCamera = new THREE.Camera();
+                    backgroundScene.add(backgroundCamera);
+                    backgroundScene.add(backgroundMesh);
+
+                    // Renderer
+
+                    var container = document.body;
+
+                    renderer = new THREE.WebGLRenderer();
+                    renderer.antialias = true;
+                    renderer.setPixelRatio(window.devicePixelRatio);
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    renderer.setClearColor(0x222222);
+                    renderer.localClippingEnabled = true;
+
+                    window.addEventListener('resize', onWindowResize, false);
+                    container.appendChild(renderer.domElement);
+
+                    // Stats
+                    stats = new Stats();
+                    container.appendChild(stats.dom);
+
+
+                    // Load Files selected by the user
+                    fileElem = document.getElementById("File");
+                    fileElem.addEventListener('change', function (event) {
+                        var loader = new THREE.STLLoader();
+
+                        var i,
+                            files = fileElem.files,
+                            len = files.length;
+                        for (i = 0; i < len; i++) {
+                            loader.load('examples/models/stl/ascii/' + files[i].name, function (geometry) {
+
+
+                                var color = new THREE.Color(Math.random(), Math.random(), Math.random());
+                                var material = new THREE.MeshPhongMaterial({ color, specular: 0x111111, shininess: 200 });
+                                //var material = new THREE.MultiMaterial(materials);
+                                mesh = new THREE.Mesh(geometry, material);
+
+                                mesh.position.set(0, 0, 0);
+                                mesh.rotation.set(0, -Math.PI / 2, 0);
+                                mesh.scale.set(0.05, 0.05, 0.05);
+                                mesh.castShadow = true;
+                                mesh.receiveShadow = true;
+                                mesh.add = files[i];
+                                scene.add(mesh);
+                            });
                         }
-		</script>
+                    }, false);
+                    // GUI
 
-	</body>
+                    mode = {
+
+                        full_scene: true,
+                        reset_scene: function () { reset_scene() }
+
+                    }
+                    var gui = new dat.GUI();
+
+                    var objectVisible = gui.add(mode, 'full_scene').name('full_scene').listen();
+                    objectVisible.onChange(function (value) {
+
+                        scene.visible = value;
+                    });
+
+                    gui.add(mode, 'reset_scene');
+
+                    function reset_scene() {
+
+                        controls.reset();
+
+                    }
+
+                    // call to raycaster
+
+                    window.addEventListener('mousemove', onMouseMove, false);
+                    window.requestAnimationFrame(render);
+
+                    raycaster = new THREE.Raycaster();
+                    mouse = new THREE.Vector2();
+
+
+                    function onMouseMove(event) {
+
+                        mouse.x = (event.clientX / innerWidth) * 2 - 1;
+                        mouse.y = -(event.clientY / innerHeight) * 2 + 1;
+
+
+                    }
+
+                    // Controls
+
+                    controls = new THREE.OrbitControls(camera, renderer.domElement);
+                    controls.target.set(0, 1, 0);
+                    controls.update();
+
+
+                    // Start
+
+                    startTime = Date.now();
+                    time = 0;
+
+                } //end init
+
+
+
+                function render() {
+
+                    // update the picking ray with the camera and mouse position
+                    raycaster.setFromCamera(mouse, camera);
+
+                    // calculate objects intersecting the picking ray
+                    var intersects = raycaster.intersectObjects(scene.children);
+
+                    for (var i = 0; i < intersects.length; i++) {
+
+                        intersects[i].object.material.color.set(0xff0000);
+                        //intersects[i].object.visible = false;
+                    }
+
+
+
+                    renderer.render(scene, camera);
+
+
+                }
+
+                function onWindowResize() {
+
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                }
+
+                function update() {
+                    controls.update();
+                    stats.update();
+                }
+
+                function animate() {
+
+                    requestAnimationFrame(animate);
+                    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                        videoImageContext.drawImage(video, 0, 0, videoImage.width, videoImage.height);
+                        if (videoTexture) {
+                            videoTexture.needsUpdate = true;
+                        }
+                    }
+                    renderer.autoClear = false;
+                    renderer.clear();
+                    renderer.render(backgroundScene, backgroundCamera);
+
+                    stats.begin();
+                    renderer.render(scene, camera);
+                    stats.end();
+                    render();
+                    update();
+
+                }
+
+
+            </script>
+    </div>
+
+</body>
+
 </html>
