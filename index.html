@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <<head>
     <title>Try Again</title>
@@ -6,9 +6,11 @@
     <meta name="viewport" content="width=device-width, user-scalable=yes, minimum-scale=1.0, maximum-scale=1.0">
     <style>
         body {
+            position: absolute;
+            top: 0px;
             margin:0px 0px 0px 0px;
             z-index:3;
-                        
+                                    
         }
 
         #monitor {
@@ -32,8 +34,9 @@
 
         #File { 
             position:absolute;
-            top:5px;
+            top:0px;
             left:800px;
+            z-index:7;
                                               
         }
     </style>
@@ -88,18 +91,22 @@
         <script src="examples/js/renderers/Projector.js"></script>
         <script src="examples/js/Detector.js"></script>
         <script src="examples/js/libs/stats.min.js"></script>
-        <srcipt src="examples/js/THREEx.FullScreen.js">
-            <script src="examples/js/THREEx.KeyboardState.js"></script>
+        <script src="examples/js/THREEx.KeyboardState.js"></script>
 
             <script>
 
                 var camera, scene, renderer;     //  Creation of the scene
-                var video, videoImage, videoImageContext, videoTexture, backgroundtexture, backgroundMesh, backgroundScene, backgroundCamera, stats, controls;  //creation of background
+                var video, videoImage, videoImageContext, videoTexture, backgroundtexture, backgroundMesh, backgroundScene, backgroundCamera, stats, controls, mesh;  //creation of background
                 var mouse, raycaster; //selection by raycasting
 
-                // Get object from the files
+                //Variable for hide objects of the gui
 
+                var group;
+                var hide_obj = new Array();
                 var fileElem;
+                var ouin = [];
+                
+                             
 
                 //initialisation and looping the scene
 
@@ -134,6 +141,7 @@
                     videoTexture.magFilter = THREE.LinearFilter;
 
                     var movieMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, overdraw: true, side: THREE.DoubleSide });
+
                     //Load the background texture
                     backgroundtexture = THREE.ImageUtils.loadTexture('1.png');
                     backgroundtexture = new THREE.Texture(videoImage);
@@ -168,6 +176,7 @@
 
 
                     // Load Files selected by the user
+                    group = new THREE.Object3D();
                     fileElem = document.getElementById("File");
                     fileElem.addEventListener('change', function (event) {
                         var loader = new THREE.STLLoader();
@@ -190,33 +199,113 @@
                                 mesh.castShadow = true;
                                 mesh.receiveShadow = true;
                                 mesh.add = files[i];
-                                scene.add(mesh);
+                                group.add(mesh);
+                                ouin.push(mesh);
+                                //scene.add(mesh);                                                           
+
                             });
+                            hide_obj[i] = files[i].name;
+                            console.log(hide_obj[i] + " ");
+                                                       
+                             
+                        } var gui = new dat.GUI();
+                        
+
+                        mode = {
+
+                            full_scene: true,
+                            object1: true,
+                            object2: true,
+                            object3: true,
+                            object4: true,
+                            object5: true,
+                            object6: true,
+                            object7: true,
+                            object8: true,
+                            object9: true,
+                            object10: true,
+                            object11: true,
+
+                            reset_scene: function () { reset_scene() }
+
                         }
+
+
+                        var sceneVisible = gui.add(mode, 'full_scene').name('full_scene').listen();
+                        sceneVisible.onChange(function (value) {
+
+                            scene.visible = value;
+                        });
+
+                        gui.add(mode, 'object1').name(hide_obj[0]).onChange(function (value) {
+
+                            ouin[0].visible = value;
+                        });
+
+                        gui.add(mode, 'object2').name(hide_obj[1]).onChange(function (value) {
+
+                            ouin[1].visible = value;
+                        })
+
+                        gui.add(mode, 'object3').name(hide_obj[2]).onChange(function (value) {
+
+                            ouin[2].visible = value;
+                        });
+
+                        gui.add(mode, 'object4').name(hide_obj[3]).onChange(function (value) {
+
+                            ouin[3].visible = value;
+                        });
+
+                        gui.add(mode, 'object5').name(hide_obj[4]).onChange(function (value) {
+
+                            ouin[4].visible = value;
+                        });
+
+                        gui.add(mode, 'object6').name(hide_obj[5]).onChange(function (value) {
+
+                            ouin[5].visible = value;
+                        })
+
+                        gui.add(mode, 'object7').name(hide_obj[6]).onChange(function (value) {
+
+                            ouin[6].visible = value;
+                        });
+
+                        gui.add(mode, 'object8').name(hide_obj[7]).onChange(function (value) {
+
+                            ouin[7].visible = value;
+                        });
+
+                        gui.add(mode, 'object9').name(hide_obj[8]).onChange(function (value) {
+
+                            ouin[8].visible = value;
+                        })
+
+                        gui.add(mode, 'object10').name(hide_obj[9]).onChange(function (value) {
+
+                            ouin[9].visible = value;
+                        });
+
+                        gui.add(mode, 'object11').name(hide_obj[10]).onChange(function (value) {
+
+                            ouin[10].visible = value;
+                        });
+                        
+                        gui.add(mode, 'reset_scene');
+
+                        function reset_scene() {
+                            controls.reset();
+                            
+                        }
+                        
                     }, false);
+
+                    scene.add(group);
+
+                                                           
                     // GUI
-
-                    mode = {
-
-                        full_scene: true,
-                        reset_scene: function () { reset_scene() }
-
-                    }
-                    var gui = new dat.GUI();
-
-                    var objectVisible = gui.add(mode, 'full_scene').name('full_scene').listen();
-                    objectVisible.onChange(function (value) {
-
-                        scene.visible = value;
-                    });
-
-                    gui.add(mode, 'reset_scene');
-
-                    function reset_scene() {
-
-                        controls.reset();
-
-                    }
+                    
 
                     // call to raycaster
 
@@ -257,12 +346,12 @@
                     raycaster.setFromCamera(mouse, camera);
 
                     // calculate objects intersecting the picking ray
-                    var intersects = raycaster.intersectObjects(scene.children);
+                    var intersects = raycaster.intersectObjects(group.children);
 
                     for (var i = 0; i < intersects.length; i++) {
 
                         intersects[i].object.material.color.set(0xff0000);
-                        //intersects[i].object.visible = false;
+                                                
                     }
 
 
