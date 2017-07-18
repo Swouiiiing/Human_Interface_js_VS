@@ -95,6 +95,13 @@
             var group;
             var hide_obj = [];
             var fileElem;
+            var meshes = [];
+            var gui;
+            var comeOn = [];
+            var variable = [];
+            var hiders = [];
+            var petit_a_petit = [];
+            //var h;
             
             //initialisation and looping the scene
             init();
@@ -120,7 +127,7 @@
                 videoTexture.magFilter = THREE.LinearFilter;
                 var movieMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, overdraw: true, side: THREE.DoubleSide });
                 //Load the background texture
-                backgroundtexture = THREE.ImageUtils.loadTexture('1.png');
+                //backgroundtexture = THREE.ImageUtils.loadTexture('1.png');
                 backgroundtexture = new THREE.Texture(videoImage);
                 backgroundMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2, 0), new THREE.MeshBasicMaterial({ map: videoTexture }));
                 backgroundMesh.material.depthTest = false;
@@ -146,14 +153,26 @@
                 // Load Files selected by the user
                 group = new THREE.Object3D();
                 fileElem = document.getElementById("File");
+                //for (var j = 0; j < fileElem.files.length; j++) {
+                 //   meshes[j] = [];
+                  //  }
+                
                 var loader = new THREE.STLLoader();
+                
                 fileElem.addEventListener('change', function (event) {
-
-                  var i ,
+                    gui = new dat.GUI();
+                    var i,
                         files = fileElem.files,
                         len = files.length;
+                    var h;
                     
-                        var callback = function (geometry) {
+                    for (var j = 0; j < len; j++)
+                    {
+                        hide_obj[j] = " ";
+                    }
+                                        
+
+                    var callback = function (geometry) {
                         var color = new THREE.Color(Math.random(), Math.random(), Math.random());
                         var material = new THREE.MeshPhongMaterial({ color, specular: 0x111111, shininess: 200 });
                         mesh = new THREE.Mesh(geometry, material);
@@ -163,88 +182,76 @@
                         mesh.castShadow = true;
                         mesh.receiveShadow = true;
                         mesh.name = files[i].name;
-                        hide_obj.push(files[i].name);
-                        //console.log(hide_obj);
-                        //console.log(mesh);
+                        mesh.id = files[i].name;
+                        hide_obj[i]=files[i].name;
+                        meshes[i] = mesh;
+                        hiders.push(mesh);
+                        comeOn.push(hide_obj.slice(i, i + 1));
                         group.add(mesh);
                         
-                        i++;
-                        if (i < len)  // put the next load in the callback
-                        { loader.load('examples/models/stl/ascii/' + files[i].name, callback); }
-                        };
-
-                        i = 0;
-
-                        loader.load('examples/models/stl/ascii/' + files[i].name, callback);
-                       
-                                         
                         
-                        var gui = new dat.GUI();
+                        
+                        //petit_a_petit.push(variable[i]);
+                        
+                        h = {
 
-                    mode = {
-                        full_scene: true,
-                        object1: true,
-                        object2: true,
-                        object3: true,
-                        object4: true,
-                        object5: true,
-                        object6: true,
-                        object7: true,
-                        object8: true,
-                        object9: true,
-                        object10: true,
-                        object11: true,
-                        reset_scene: function () { reset_scene() }
-                    }
-                    var sceneVisible = gui.add(mode, 'full_scene').name('full_scene').listen();
-                    sceneVisible.onChange(function (value) {
-                        scene.visible = value;
-                    });
-                    gui.add(mode, 'object1').name(hide_obj[0]).onChange(function (value) {
-                        mesh.getElementsByName(hide_obj[0]).visible = value;
-                    });
-                    gui.add(mode, 'object2').name(hide_obj[1]).onChange(function (value) {
-                        files_name[1].visible = value;
-                    })
-                    gui.add(mode, 'object3').name(hide_obj[2]).onChange(function (value) {
-                        files_name[2].visible = value;
-                    });
-                    gui.add(mode, 'object4').name(hide_obj[3]).onChange(function (value) {
-                        files_name[3].visible = value;
-                    });
-                    gui.add(mode, 'object5').name(hide_obj[4]).onChange(function (value) {
-                        files_name[4].visible = value;
-                    });
-                    gui.add(mode, 'object6').name(hide_obj[5]).onChange(function (value) {
-                        document.getElementsByName(files_name[5]).visible = value;
-                    })
-                    gui.add(mode, 'object7').name(hide_obj[6]).onChange(function (value) {
-                        files_name[6].visible = value;
-                    });
-                    gui.add(mode, 'object8').name(hide_obj[7]).onChange(function (value) {
-                        files_name[7].visible = value;
-                    });
-                    gui.add(mode, 'object9').name(hide_obj[8]).onChange(function (value) {
-                        files_name[8].visible = value;
-                    })
-                    gui.add(mode, 'object10').name(hide_obj[9]).onChange(function (value) {
-                        files_name[9].visible = value;
-                    });
-                    gui.add(mode, 'object11').name(hide_obj[10]).onChange(function (value) {
-                        files_name[10].visible = value;
-                    });
+                            toggleObjects: true
 
-                    gui.add(mode, 'reset_scene');
-                    function reset_scene() {
-                        controls.reset();
+                        }
+                            
+                        
+                       
+                        i++;
+                        
+                        if (i < len)  // put the next load in the callback
+                        {
+                            loader.load('examples/models/stl/ascii/' + files[i].name, callback);
+                            console.log("mais est ce que ca fait mal ?" + i);
+                            variable[i] = gui.add(h, 'toggleObjects').name(files[i].name).listen();
+                            
+                            variable[i].onChange(function (value) {
+                                //console.log(hiders);
+                                hiders[i].visible = value;
+                            });
+                        }
+                        
+                        //variable[0].onChange(function hide);
+                        
+                        
+                    };
+                    
+                    i = 0;
+                    
+                    loader.load('examples/models/stl/ascii/' + files[i].name, callback);
+                    h = {
+
+                        toggleObjects: true
 
                     }
+                    variable[i] = gui.add(h, 'toggleObjects').name(files[i].name).listen(); 
+                        
+                    variable[i].onChange(function (value) {
+                        console.log(hiders);
+                        hiders[0].visible = value;
+                    });
+                    
+                   }, false);
 
-                }, false);
+                
+               scene.add(group);
+               
+                //GUI
+               
+                
+               
+                
+                /*mode = {
+                    visible: true
 
-                scene.add(group);
+                };
 
-                // GUI
+                */
+                
 
                 // call to raycaster
                 window.addEventListener('mousemove', onMouseMove, false);
@@ -263,6 +270,8 @@
                 startTime = Date.now();
                 time = 0;
             } //end init
+
+                        
             function render() {
                 // update the picking ray with the camera and mouse position
                 raycaster.setFromCamera(mouse, camera);
