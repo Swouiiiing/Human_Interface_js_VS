@@ -101,7 +101,7 @@
             var variable = [];
             var hiders = [];
             var petit_a_petit = [];
-            //var h;
+            var h;
             
             //initialisation and looping the scene
             init();
@@ -160,11 +160,10 @@
                 var loader = new THREE.STLLoader();
                 
                 fileElem.addEventListener('change', function (event) {
-                    gui = new dat.GUI();
+                    
                     var i,
                         files = fileElem.files,
                         len = files.length;
-                    var h;
                     
                     for (var j = 0; j < len; j++)
                     {
@@ -188,31 +187,13 @@
                         hiders.push(mesh);
                         comeOn.push(hide_obj.slice(i, i + 1));
                         group.add(mesh);
-                        
-                        
-                        
-                        //petit_a_petit.push(variable[i]);
-                        
-                        h = {
-
-                            toggleObjects: true
-
-                        }
-                            
-                        
-                       
+                                           
                         i++;
                         
                         if (i < len)  // put the next load in the callback
                         {
                             loader.load('examples/models/stl/ascii/' + files[i].name, callback);
-                            console.log("mais est ce que ca fait mal ?" + i);
-                            variable[i] = gui.add(h, 'toggleObjects').name(files[i].name).listen();
-                            
-                            variable[i].onChange(function (value) {
-                                //console.log(hiders);
-                                hiders[i].visible = value;
-                            });
+                                                        
                         }
                         
                         //variable[0].onChange(function hide);
@@ -223,35 +204,38 @@
                     i = 0;
                     
                     loader.load('examples/models/stl/ascii/' + files[i].name, callback);
-                    h = {
+                    
+                    //GUI
 
-                        toggleObjects: true
+                    gui = new dat.GUI();
+                    for (var k = 0; k < len; k++) {
+                        h = {
+                            toggleObjects: true
+                        }
+                        variable[k] = gui.add(h, 'toggleObjects').name(files[k].name).listen();
+                    }
+
+                    
+
+                    for (let l = 0; l < len; l++)
+                    {
+
+                            variable[l].onChange(function (value) {
+                            //console.log("on tente avec let " + variable[l]);
+                            hiders[l].visible = value;
+                        });
+
 
                     }
-                    variable[i] = gui.add(h, 'toggleObjects').name(files[i].name).listen(); 
-                        
-                    variable[i].onChange(function (value) {
-                        console.log(hiders);
-                        hiders[0].visible = value;
-                    });
-                    
-                   }, false);
+
+                               
+
+                }, false);
 
                 
                scene.add(group);
                
-                //GUI
-               
-                
-               
-                
-                /*mode = {
-                    visible: true
-
-                };
-
-                */
-                
+                                
 
                 // call to raycaster
                 window.addEventListener('mousemove', onMouseMove, false);
