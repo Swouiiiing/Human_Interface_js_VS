@@ -11,6 +11,7 @@
             top: 0px;
             margin: 0px 0px 0px 0px;
             z-index: 3;
+            overflow: hidden;
         }
 
         #monitor {
@@ -86,24 +87,24 @@
         <script src="examples/js/Detector.js"></script>
         <script src="examples/js/libs/stats.min.js"></script>
         <script src="examples/js/THREEx.KeyboardState.js"></script>
+        
+        
 
         <script>
             var camera, scene, renderer;     //  Creation of the scene
-            var video, videoImage, videoImageContext, videoTexture, backgroundtexture, backgroundMesh, backgroundScene, backgroundCamera, stats, controls, mesh;  //creation of background
-            var mouse, raycaster; //selection by raycasting
+            var video, videoImage, videoImageContext, videoTexture, imageData, backgroundtexture, backgroundMesh, backgroundScene, backgroundCamera, stats, controls, mesh;  //creation of background
+                        
             //Variable for hide objects of the gui
             var group;
-            var hide_obj = [];
             var fileElem;
             var meshes = [];
             var gui;
-            var comeOn = [];
             var variable = [];
-            var hiders = [];
-            var petit_a_petit = [];
+            var hiders = [];            
             var h;
-            
+            var Color = [];
             //initialisation and looping the scene
+            
             init();
             animate();
             function init() {
@@ -119,6 +120,11 @@
                 video = document.getElementById('monitor');
                 videoImage = document.getElementById('videoImage');
                 videoImageContext = videoImage.getContext('2d');
+                //imageData = videoImageContext.getImageData();
+                //var map_loader = new THREE.TextureLoader();
+               // mappy = map_loader.load('examples/textures/planets/earth_atmos_2048.jpg');
+                                                  
+               
                 // Background color if no video present
                 videoImageContext.fillStyle = '#000000';
                 videoImageContext.fillRect(0, 0, videoImage.innerWidth, videoImage.innerHeight);
@@ -153,27 +159,25 @@
                 // Load Files selected by the user
                 group = new THREE.Object3D();
                 fileElem = document.getElementById("File");
-                //for (var j = 0; j < fileElem.files.length; j++) {
-                 //   meshes[j] = [];
-                  //  }
                 
+
                 var loader = new THREE.STLLoader();
-                
+                var mamap = new THREE.TextureLoader();
+
                 fileElem.addEventListener('change', function (event) {
-                    
+
                     var i,
                         files = fileElem.files,
                         len = files.length;
-                    
-                    for (var j = 0; j < len; j++)
-                    {
-                        hide_obj[j] = " ";
-                    }
-                                        
 
                     var callback = function (geometry) {
-                        var color = new THREE.Color(Math.random(), Math.random(), Math.random());
-                        var material = new THREE.MeshPhongMaterial({ color, specular: 0x111111, shininess: 200 });
+                        //var color = new THREE.Color(Math.random(), Math.random(), Math.random());
+                        //var color = new THREE.Color(imageData[0], imageData[1], imageData[2]);
+                        //var material = new THREE.MeshPhongMaterial({ color, specular: 0x111111, shininess: 200, transparent: true }); //specular: 0x111111, shininess: 200,
+                        
+                        //mappy = map_loader.load('examples/textures/humanLiverTexture.png');
+                        var material = new THREE.MeshPhongMaterial({transparent: true});
+                        
                         mesh = new THREE.Mesh(geometry, material);
                         mesh.position.set(0, 0, 0);
                         mesh.rotation.set(0, -Math.PI / 2, 0);
@@ -181,71 +185,121 @@
                         mesh.castShadow = true;
                         mesh.receiveShadow = true;
                         mesh.name = files[i].name;
-                        mesh.id = files[i].name;
-                        hide_obj[i]=files[i].name;
                         meshes[i] = mesh;
                         hiders.push(mesh);
-                        comeOn.push(hide_obj.slice(i, i + 1));
                         group.add(mesh);
-                                           
-                        i++;
                         
+                        i++;
+
                         if (i < len)  // put the next load in the callback
                         {
                             loader.load('examples/models/stl/ascii/' + files[i].name, callback);
-                                                        
-                        }
-                        
-                        //variable[0].onChange(function hide);
-                        
-                        
-                    };
-                    
-                    i = 0;
-                    
-                    loader.load('examples/models/stl/ascii/' + files[i].name, callback);
-                    
-                    //GUI
 
+                        }
+                    };
+
+                    i = 0;
+
+                    loader.load('examples/models/stl/ascii/' + files[i].name, callback);
+
+                    //GUI
+                    
                     gui = new dat.GUI();
+                    var folders = [];
+                    var opacities = [];
+                    var textures = [];
                     for (var k = 0; k < len; k++) {
                         h = {
-                            toggleObjects: true
-                        }
-                        variable[k] = gui.add(h, 'toggleObjects').name(files[k].name).listen();
+                            toggleObjects: true,
+                            full_scene: true,
+                            reset_scene: function () { reset_scene(); },
+                            color: "#ff0000",
+                            camera_locked: false,
+                            opacity: 1,
+                            texture: ""
+
+                        };
+                        folders[k] = gui.addFolder(files[k].name.split(".").reverse().pop());
+                        variable[k] = folders[k].add(h, 'toggleObjects').name('Visible').listen();
+                        Color[k] = folders[k].addColor(h, 'color').name('color').listen();
+                        opacities[k] = folders[k].add(h, 'opacity').min(0).max(1).step(0.01).name('Opacity').listen();
+                        textures[k] = folders[k].add(h,'texture',["liver","bone"]).name('Organe texture').listen();                        
                     }
 
-                    
+                    for (let l = 0; l < len; l++) {
 
-                    for (let l = 0; l < len; l++)
-                    {
-
-                            variable[l].onChange(function (value) {
-                            //console.log("on tente avec let " + variable[l]);
+                        variable[l].onChange(function (value) {
+                             
                             hiders[l].visible = value;
                         });
 
-
+                    }
+                    for (let m = 0; m < len; m++) {
+                        Color[m].onChange(function (value)
+                        { meshes[m].material.color.setHex(value.replace("#", "0x")); });
                     }
 
-                               
+                    for (let n = 0; n < len; n++)
+                    {
+                        opacities[n].onChange(function (value)
+                        {
+                            meshes[n].material.opacity = value;                            
+                        });
+                    }
 
+                    for (let o = 0; o < len; o++) {
+
+                        textures[o].onChange(function (value) {
+                            //var name = meshes[o].name.split(".").reverse().pop();
+                            if (value == "bone")
+                            {
+                                //console.log(value + " " + meshes[o]);
+                                var myMap = mamap.load('examples/textures/' + value + '.jpg');
+                                meshes[o].material.map = myMap;
+                                meshes[o].material.needsUpdate = true;
+                                console.log(myMap);
+                            }
+                            else if (value == "liver")
+                            { //console.log(value + " " + meshes[o]); 
+                                var myMap = mamap.load('examples/textures/' + value + '.jpg');
+                                meshes[o].material.map = myMap;
+                                meshes[o].material.needsUpdate = true;
+                                console.log(myMap);
+                            }
+                            else
+                            { console.log(value + " " + meshes[o]); }
+                        });
+                    }
+
+                    
+
+                    var hide_scene = gui.add(h, 'full_scene').name('Hide Scene').listen();
+                    hide_scene.onChange(function (value) { scene.visible = value; });
+
+                    gui.add(h, 'reset_scene').name('Reset');
+                    function reset_scene()
+                    {
+                        controls.reset();
+                        for (let n = 0; n < len; n++)
+                        {
+                            meshes[n].visible = true;
+                        }
+                                               
+                    }
+
+                    var lock_camera = gui.add(h, 'camera_locked').name('Lock Model').listen();
+                    lock_camera.onChange(function (value) {
+                    controls.enableZoom = !value;
+                    controls.enableRotate = !value;
+                    controls.enablePan = !value;
+                    });
+                    
                 }, false);
 
                 
-               scene.add(group);
-               
+                scene.add(group);
                                 
-
-                // call to raycaster
-                window.addEventListener('mousemove', onMouseMove, false);
-                window.requestAnimationFrame(render);
-                raycaster = new THREE.Raycaster();
-                mouse = new THREE.Vector2();
-                function onMouseMove(event) {
-                    mouse.x = (event.clientX / innerWidth) * 2 - 1;
-                    mouse.y = -(event.clientY / innerHeight) * 2 + 1;
-                }
+                
                 // Controls
                 controls = new THREE.OrbitControls(camera, renderer.domElement);
                 controls.target.set(0, 1, 0);
@@ -255,27 +309,44 @@
                 time = 0;
             } //end init
 
-                        
-            function render() {
-                // update the picking ray with the camera and mouse position
-                raycaster.setFromCamera(mouse, camera);
-                // calculate objects intersecting the picking ray
-                var intersects = raycaster.intersectObjects(group.children);
-                for (var i = 0; i < intersects.length; i++) {
-                    intersects[i].object.material.color.set(0xff0000);
+           /* function updateTexture() {
 
+                var mamap = new THREE.TextureLoader();
+
+                var value = h.texture;
+                
+                if (value == "bone")
+                {
+                    console.log(value);
+                    var myMap = mamap.load('examples/textures/' + value + '.jpg');
+                    console.log(myMap);
+                    mesh.material.map = myMap;
+                    mesh.material.needsUpdate = true;
+                    
                 }
+                if (value == "liver")
+                { console.log(value);}
+                
+                
+            }*/
+
+
+            function render() {
+               
                 renderer.render(scene, camera);
             }
+
             function onWindowResize() {
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             }
+
             function update() {
                 controls.update();
                 stats.update();
             }
+
             function animate() {
                 requestAnimationFrame(animate);
                 if (video.readyState === video.HAVE_ENOUGH_DATA) {
