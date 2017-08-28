@@ -103,12 +103,14 @@
             var hiders = [];            
             var h;
             var Color = [];
+            var textures = [];
             //initialisation and looping the scene
             
             init();
             animate();
             function init() {
                 camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.01, 800);
+                camera.aspect = window.innerWidth/window.innerHeight;
                 camera.position.set(-20, 10, 50);
                 camera.lookAt(new THREE.Vector3(0, 0, 0, ));
                 scene = new THREE.Scene();
@@ -151,7 +153,7 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setClearColor(0x222222);
                 renderer.localClippingEnabled = true;
-                window.addEventListener('resize', onWindowResize, false);
+                //window.addEventListener('resize', onWindowResize, false);
                 container.appendChild(renderer.domElement);
                 // Stats
                 stats = new Stats();
@@ -164,19 +166,26 @@
                 var loader = new THREE.STLLoader();
                 var mamap = new THREE.TextureLoader();
 
+                
+
                 fileElem.addEventListener('change', function (event) {
 
                     var i,
                         files = fileElem.files,
                         len = files.length;
 
+                    for (var j = 0; j < len; j++) {
+                        var myMap = mamap.load('examples/textures/ApplicationTextures/' + files[j].name.split(".").reverse().pop()+'.jpg');
+                        textures.push(myMap);
+                    }
+
+                    
+
                     var callback = function (geometry) {
-                        //var color = new THREE.Color(Math.random(), Math.random(), Math.random());
-                        //var color = new THREE.Color(imageData[0], imageData[1], imageData[2]);
-                        //var material = new THREE.MeshPhongMaterial({ color, specular: 0x111111, shininess: 200, transparent: true }); //specular: 0x111111, shininess: 200,
                         
-                        //mappy = map_loader.load('examples/textures/humanLiverTexture.png');
-                        var material = new THREE.MeshPhongMaterial({transparent: true});
+                        //var material = new THREE.MeshPhongMaterial({ color, specular: 0x111111, shininess: 200, transparent: true }); //specular: 0x111111, shininess: 200,
+                                                
+                        var material = new THREE.MeshPhongMaterial({transparent: true, map:textures[i] });
                         
                         mesh = new THREE.Mesh(geometry, material);
                         mesh.position.set(0, 0, 0);
@@ -195,6 +204,7 @@
                         {
                             loader.load('examples/models/stl/ascii/' + files[i].name, callback);
 
+
                         }
                     };
 
@@ -207,7 +217,7 @@
                     gui = new dat.GUI();
                     var folders = [];
                     var opacities = [];
-                    var textures = [];
+                    //var textures = [];
                     for (var k = 0; k < len; k++) {
                         h = {
                             toggleObjects: true,
@@ -215,15 +225,14 @@
                             reset_scene: function () { reset_scene(); },
                             color: "#ff0000",
                             camera_locked: false,
-                            opacity: 1,
-                            texture: ""
-
+                            opacity: 1
                         };
+
                         folders[k] = gui.addFolder(files[k].name.split(".").reverse().pop());
                         variable[k] = folders[k].add(h, 'toggleObjects').name('Visible').listen();
                         Color[k] = folders[k].addColor(h, 'color').name('color').listen();
                         opacities[k] = folders[k].add(h, 'opacity').min(0).max(1).step(0.01).name('Opacity').listen();
-                        textures[k] = folders[k].add(h,'texture',["liver","bone"]).name('Organe texture').listen();                        
+                                                
                     }
 
                     for (let l = 0; l < len; l++) {
@@ -232,46 +241,20 @@
                              
                             hiders[l].visible = value;
                         });
-
                     }
-                    for (let m = 0; m < len; m++) {
+
+                   for (let m = 0; m < len; m++) {
                         Color[m].onChange(function (value)
                         { meshes[m].material.color.setHex(value.replace("#", "0x")); });
                     }
-
+                    
                     for (let n = 0; n < len; n++)
                     {
                         opacities[n].onChange(function (value)
                         {
                             meshes[n].material.opacity = value;                            
                         });
-                    }
-
-                    for (let o = 0; o < len; o++) {
-
-                        textures[o].onChange(function (value) {
-                            //var name = meshes[o].name.split(".").reverse().pop();
-                            if (value == "bone")
-                            {
-                                //console.log(value + " " + meshes[o]);
-                                var myMap = mamap.load('examples/textures/' + value + '.jpg');
-                                meshes[o].material.map = myMap;
-                                meshes[o].material.needsUpdate = true;
-                                console.log(myMap);
-                            }
-                            else if (value == "liver")
-                            { //console.log(value + " " + meshes[o]); 
-                                var myMap = mamap.load('examples/textures/' + value + '.jpg');
-                                meshes[o].material.map = myMap;
-                                meshes[o].material.needsUpdate = true;
-                                console.log(myMap);
-                            }
-                            else
-                            { console.log(value + " " + meshes[o]); }
-                        });
-                    }
-
-                    
+                    }                                              
 
                     var hide_scene = gui.add(h, 'full_scene').name('Hide Scene').listen();
                     hide_scene.onChange(function (value) { scene.visible = value; });
@@ -307,29 +290,12 @@
                 // Start
                 startTime = Date.now();
                 time = 0;
+
+                
+
             } //end init
 
-           /* function updateTexture() {
-
-                var mamap = new THREE.TextureLoader();
-
-                var value = h.texture;
-                
-                if (value == "bone")
-                {
-                    console.log(value);
-                    var myMap = mamap.load('examples/textures/' + value + '.jpg');
-                    console.log(myMap);
-                    mesh.material.map = myMap;
-                    mesh.material.needsUpdate = true;
-                    
-                }
-                if (value == "liver")
-                { console.log(value);}
-                
-                
-            }*/
-
+           
 
             function render() {
                
@@ -337,7 +303,7 @@
             }
 
             function onWindowResize() {
-                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.aspect = video.clientHeight / video.clientWidth;
                 camera.updateProjectionMatrix();
                 renderer.setSize(window.innerWidth, window.innerHeight);
             }
