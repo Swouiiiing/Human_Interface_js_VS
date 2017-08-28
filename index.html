@@ -17,6 +17,10 @@
         #monitor {
             margin: 0px 0px 0px 0px;
             position: absolute;
+            width: 100vw;
+            height: 56.25vw;
+            max-height: 100vw;
+            max-width: 177.78vw;
             top: 0px;
             left: 0px;
             float: left;
@@ -27,6 +31,10 @@
         #videoImage {
             margin: 0px 0px 0px 0px;
             position: absolute;
+            width: 100vw;
+            height: 56.25vw;
+            max-height: 100vw;
+            max-width: 177.78vw;
             top: 0px;
             left: 0px;
             float: left;
@@ -45,8 +53,8 @@
 
 <p id="errorMessage"></p>
 <body>
-    <video id="monitor" autoplay width="500" height="500"></video>
-    <canvas id="videoImage" width="500" height="500"></canvas>
+    <video id="monitor" autoplay></video>
+    <canvas id="videoImage" ></canvas>
 
     <form>
         <input type="file" id="File" onload="files_loaded(this.files)" multiple>
@@ -92,6 +100,7 @@
 
         <script>
             var camera, scene, renderer;     //  Creation of the scene
+            var width, height;
             var video, videoImage, videoImageContext, videoTexture, imageData, backgroundtexture, backgroundMesh, backgroundScene, backgroundCamera, stats, controls, mesh;  //creation of background
 
             //Variable for hide objects of the gui
@@ -104,20 +113,21 @@
             var h;
             var Color = [];
             var textures = [];
-            
+
 
 
             //loading textures in a txt file
             var text_data = [];
             var color_data = [];
-            var colors_to_apply = [];                
-            
+            var colors_to_apply = [];
+
             //initialisation and looping the scene
             init();
             animate();
             function init() {
-                
+
                 camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 0.01, 800);
+                camera.aspect = window.innerHeight / window.innerWidth;
                 camera.position.set(-20, 10, 50);
                 camera.lookAt(new THREE.Vector3(0, 0, 0, ));
                 scene = new THREE.Scene();
@@ -129,20 +139,18 @@
                 video = document.getElementById('monitor');
                 videoImage = document.getElementById('videoImage');
                 videoImageContext = videoImage.getContext('2d');
-                //imageData = videoImageContext.getImageData();
-                //var map_loader = new THREE.TextureLoader();
-                // mappy = map_loader.load('examples/textures/planets/earth_atmos_2048.jpg');
+               
 
 
                 // Background color if no video present
                 videoImageContext.fillStyle = '#000000';
-                videoImageContext.fillRect(0, 0, videoImage.innerWidth, videoImage.innerHeight);
+                videoImageContext.fillRect(0, 0, window.innerWidth, window.innerHeight);
                 videoTexture = new THREE.Texture(videoImage);
                 videoTexture.minFilter = THREE.LinearFilter;
                 videoTexture.magFilter = THREE.LinearFilter;
                 var movieMaterial = new THREE.MeshBasicMaterial({ map: videoTexture, overdraw: true, side: THREE.DoubleSide });
                 //Load the background texture
-                //backgroundtexture = THREE.ImageUtils.loadTexture('1.png');
+               
                 backgroundtexture = new THREE.Texture(videoImage);
                 backgroundMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2, 0), new THREE.MeshBasicMaterial({ map: videoTexture }));
                 backgroundMesh.material.depthTest = false;
@@ -157,9 +165,13 @@
                 renderer = new THREE.WebGLRenderer();
                 renderer.antialias = true;
                 renderer.setPixelRatio(window.devicePixelRatio);
-                renderer.setSize(window.innerWidth, window.innerHeight);
+                //camera.aspect = (video.clientHeight/video.clientWidth);
+                
+                
+                renderer.setSize(window.innerWidth , window.innerHeight);
                 renderer.setClearColor(0x222222);
                 renderer.localClippingEnabled = true;
+                
                 window.addEventListener('resize', onWindowResize, false);
                 container.appendChild(renderer.domElement);
                 // Stats
@@ -184,17 +196,17 @@
                                     color_data.push(text_data[j].split(" "));
 
                                 }
-                                
+
                             }
                         }
                     }
                     rawFile.send(null);
                 }
-                readTextFile("http://localhost:61701/work/examples/textures/ApplicationTextures/Test2.txt");
+                readTextFile("http://localhost:54298/work/examples/textures/ApplicationTextures/test3.txt");
 
                 //try to find a way to figure out how to get a fix path and not depend on the local host
-                
-                              
+
+
 
 
                 var loader = new THREE.STLLoader();
@@ -213,22 +225,29 @@
                         textures.push(myMap);
                     }
 
-                   for (var z = 0; z < color_data.length; z++) {
-                       for (var y = 1; y < color_data[z].length; y++) {
-                           colors_to_apply.push(color_data[z][y]);
-                           
-                       }
-                        
-                   }
-                   
+                    for (var z = 0; z < color_data.length; z++) {
+                        for (var y = 1; y < color_data[z].length; y++) {
+                            colors_to_apply.push(color_data[z][y]);
+
+                        }
+
+                    }
+
+
+                    //fucbtion for load every files
+
                     var callback = function (geometry) {
 
                         //var material = new THREE.MeshPhongMaterial({ color, specular: 0x111111, shininess: 200, transparent: true }); //specular: 0x111111, shininess: 200,
+                        // we get the rgb colors from the txt file
                         var coloration = new THREE.Color(colors_to_apply[v], colors_to_apply[v + 1], colors_to_apply[v + 2])
+                        //we convert them in hexadecimal
                         var new_coloration = rgbToHex(coloration.r, coloration.g, coloration.b);
-                        console.log(coloration);
-                        console.log(new_coloration);
+                        //we apply it to the material, the material is update at every call of the callback function
                         var material = new THREE.MeshPhongMaterial({ transparent: true, color: new_coloration });//map: textures[i] });
+
+
+
 
                         mesh = new THREE.Mesh(geometry, material);
                         mesh.position.set(0, 0, 0);
@@ -251,7 +270,7 @@
 
                         }
                     };
-                    v=0
+                    v = 0
                     i = 0;
 
                     loader.load('examples/models/stl/ascii/' + files[i].name, callback);
@@ -347,9 +366,13 @@
             }
 
             function onWindowResize() {
-                camera.aspect = window.innerWidth / window.innerHeight;
+                
+                videoImage.width = videoImage.clientWidth;
+                videoImage.height = videoImage.clientHeight;
+                renderer.setViewport(0, 0, videoImage.clientWidth, videoImage.clientHeight);
+                renderer.setSize(videoImage.clientWidth, videoImage.clientHeight);
+                camera.aspect = videoImage.clientWidth / videoImage.clientHeight;
                 camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
             }
 
             function update() {
@@ -360,6 +383,7 @@
             function animate() {
                 requestAnimationFrame(animate);
                 if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    
                     videoImageContext.drawImage(video, 0, 0, videoImage.width, videoImage.height);
                     if (videoTexture) {
                         videoTexture.needsUpdate = true;
@@ -368,12 +392,17 @@
                 renderer.autoClear = false;
                 renderer.clear();
                 renderer.render(backgroundScene, backgroundCamera);
+                renderer.localClippingEnabled = false;
                 stats.begin();
                 renderer.render(scene, camera);
                 stats.end();
                 render();
                 update();
             }
+
+
+
+            //css modifications width="500" height="500"
         </script>
     </div>
 
